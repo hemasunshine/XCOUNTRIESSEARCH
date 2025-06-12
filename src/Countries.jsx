@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
 
 
 function CountryCard({ name, flag, abbr }) {
@@ -54,33 +56,29 @@ const Countries = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+useEffect(() => {
+  const fetchCountries = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    useEffect(() => {
-        const fetchCountries = async () => {
-            try {
-                setLoading(true);
-                setError(null);
+      const response = await axios.get(API_ENDPOINT);
+      const data = response.data;
 
-                const response = await fetch(API_ENDPOINT);
+      setAllCountries(data);
+      setFilteredCountries(data);
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                setAllCountries(data);
-                setFilteredCountries(data);
-            } catch (err) {
+  fetchCountries();
+}, []);
 
-                setError(err.message);
-                console.error("Error fetching data:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchCountries();
-    }, []);
-
+    
 
     useEffect(() => {
         if (searchTerm === '') {
