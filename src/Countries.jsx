@@ -1,180 +1,129 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 
-
-function CountryCard({ name, flag, abbr }) {
-    return (
-        <div
-            className="countryCard" // Add this line
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "4px",
-                border: "1px solid gray",
-                borderRadius: "4px",
-                height: "200px",
-                width: "200px",
-                textAlign: "center",
-                boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-                transition: "transform 0.2s ease-in-out",
-            }}
-
-            onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-            onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
-        >
-            <img
-                src={flag}
-                alt={`flag of ${abbr}`}
-                style={{
-                    height: "100px",
-                    width: "100px",
-                    objectFit: "contain",
-                }}
-
-                onError={(e) => {
-                    e.target.onerror = null;
-
-                    e.target.src = `https://placehold.co/100x100/E0E0E0/6C757D?text=No+Flag`;
-                }}
-            />
-            <h2 style={{ fontSize: "1.2em", margin: "0" }}>{name}</h2>
-        </div>
-    );
+function CountryCard({ name, flag }) {
+  return (
+    <div
+      className="countryCard"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "8px",
+        border: "1px solid #ccc",
+        borderRadius: "8px",
+        padding: "10px",
+        width: "200px",
+        height: "200px",
+      }}
+    >
+      {flag ? (
+        <img
+          src={flag}
+          alt={name}
+          style={{
+            width: "100px",
+            height: "100px",
+                        
+          }}
+          onError={(e) => {
+            e.target.style.display = "none"; // Hide broken image
+            console.warn("Flag failed to load for:", name);
+          }}
+        />
+      ) : (
+        <span style={{ fontSize: "12px", color: "gray" }}>No flag</span>
+      )}
+      <b>{name}</b>
+    </div>
+  );
 }
 
-
-const API_ENDPOINT = 'https://xcountries-backend.azurewebsites.net/all';
-
-
 const Countries = () => {
-    const [allCountries, setAllCountries] = useState([]);
-    const [filteredCountries, setFilteredCountries] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [allCountries, setAllCountries] = useState([]);
+  const [filteredCountries, setFilteredCountries] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
-useEffect(() => {
+  
+  useEffect(() => {
   const fetchCountries = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      const response = await axios.get(
+        "https://countries-search-data-prod-812920491762.asia-south1.run.app/countries"
+      );
+      console.log("Fetched countries:", response.data);
 
-      const response = await axios.get(API_ENDPOINT);
-      const data = response.data;
+      const validData = response.data
+        .filter((country) => country.common && country.png)
+        .map((country) => ({
+          name: country.common,
+          flag: country.png,
+        }));
 
-      setAllCountries(data);
-      setFilteredCountries(data);
-    } catch (err) {
-      setError(err.message);
-      console.error("Error fetching data:", err);
-    } finally {
-      setLoading(false);
+      console.log("Valid countries after filtering:", validData.length);
+      setAllCountries(validData);
+      setFilteredCountries(validData);
+    } catch (error) {
+      console.error("Error fetching countries:", error);
     }
   };
-
   fetchCountries();
 }, []);
 
-    
-
-    useEffect(() => {
-        if (searchTerm === '') {
-
-            setFilteredCountries(allCountries);
-        } else {
-
-            const lowerCaseSearchTerm = searchTerm.toLowerCase();
-
-            const filtered = allCountries.filter(country =>
-                country.name.toLowerCase().includes(lowerCaseSearchTerm)
-            );
-            setFilteredCountries(filtered);
-        }
-    }, [searchTerm, allCountries]);
-
-
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-    };
-
-    return (
-        <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding: "20px",
-            minHeight: "100vh",
-            backgroundColor: "#f0f2f5",
-            fontFamily: "'Inter', sans-serif",
-        }}>
-            <div style={{
-                width: "100%",
-                maxWidth: "600px",
-                marginBottom: "20px",
-                boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-                borderRadius: "8px",
-                overflow: "hidden",
-            }}>
-                <input
-                    type="text"
-                    placeholder="Search for countries..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    style={{
-                        width: "100%",
-                        padding: "12px 15px",
-                        border: "1px solid #ccc",
-                        borderRadius: "8px",
-                        fontSize: "1.1em",
-                        boxSizing: "border-box",
-                    }}
-                />
-            </div>
-
-            {loading && (
-                <div style={{ fontSize: "1.5em", color: "#555", marginTop: "50px" }}>Loading countries...</div>
-            )}
-
-            {error && (
-                <div style={{ fontSize: "1.5em", color: "red", marginTop: "50px" }}>Error: {error}. Please try again later.</div>
-            )}
-
-
-            {!loading && !error && filteredCountries.length === 0 && searchTerm !== '' && (
-                <div style={{ fontSize: "1.5em", color: "#555", marginTop: "50px" }}>No countries found for "{searchTerm}".</div>
-            )}
-
-             {!loading && !error && filteredCountries.length === 0 && searchTerm === '' && (
-                <div style={{ fontSize: "1.5em", color: "#555", marginTop: "50px" }}>No countries to show.</div>
-            )}
-
-            {!loading && !error && filteredCountries.length > 0 && (
-                <div
-                    style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        justifyContent: "center",
-                        gap: "20px",
-                        width: "100%",
-                        maxWidth: "1200px",
-                    }}
-                >
-
-                    {filteredCountries.map((item) => (
-                        <CountryCard
-                            name={item.name}
-                            flag={item.flag}
-                            abbr={item.abbr}
-                            key={item.abbr}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
+ 
+  useEffect(() => {
+    const filtered = allCountries.filter(
+      (country) =>
+        country.name &&
+        country.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    setFilteredCountries(filtered);
+  }, [searchTerm, allCountries]);
+
+  return (
+    <div>
+      {/* Search Bar */}
+      <div style={{ textAlign: "center", padding: "20px" }}>
+        <input
+          type="text"
+          placeholder="Search for countries..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            padding: "10px",
+            width: "60%",
+            fontSize: "16px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+          }}
+        />
+      </div>
+
+      {/* Country Cards */}
+      <div
+        style={{
+          display:"flex",
+        flexWrap:"wrap",
+        alignItems: "center",
+        gap:" 10px",
+        }}
+      >
+        {filteredCountries.length === 0 ? (
+          <p>No countries to display</p>
+        ) : (
+          filteredCountries.map((country, index) => (
+            <CountryCard
+              key={index}
+              name={country.name}
+              flag={country.flag}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default Countries;
