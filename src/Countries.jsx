@@ -36,7 +36,7 @@ function CountryCard({ name, flag }) {
       ) : (
         <span style={{ fontSize: "12px", color: "gray" }}>No flag</span>
       )}
-      <b>{name}</b>
+      <p>{name}</p>
     </div>
   );
 }
